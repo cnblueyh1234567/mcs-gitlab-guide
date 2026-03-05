@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitLab Guide for Testers — MCS Cloud Team</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --primary: #6B4FBB;
+    --primary-light: #8B6FDB;
+    --primary-bg: #F4F0FF;
+    --accent: #FC6D26;
+    --accent-light: #FFF4EF;
+    --success: #108548;
+    --success-bg: #ECFFF0;
+    --warning: #E9A820;
+    --warning-bg: #FFFBE6;
+    --danger: #DD2B0E;
+    --danger-bg: #FFF0ED;
+    --info: #1F75CB;
+    --info-bg: #EEF5FF;
+    --text: #1F2328;
+    --text-secondary: #636C76;
+    --border: #D8DEE4;
+    --bg: #FAFBFC;
+    --card: #FFFFFF;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+    --shadow-hover: 0 4px 12px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.06);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'IBM Plex Sans Thai', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    background: linear-gradient(135deg, #6B4FBB 0%, #E24329 50%, #FC6D26 100%);
+    color: white;
+    padding: 60px 20px 80px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: var(--bg);
+    border-radius: 40px 40px 0 0;
+  }
+  .hero h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .hero p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  .hero .gitlab-logo {
+    font-size: 3.5rem;
+    margin-bottom: 16px;
+  }
+
+  /* ── Container ── */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  /* ── Navigation Tabs ── */
+  .nav-tabs {
+    display: flex;
+    gap: 8px;
+    margin: -30px auto 32px;
+    max-width: 900px;
+    padding: 0 20px;
+    overflow-x: auto;
+    position: relative;
+    z-index: 10;
+  }
+  .nav-tab {
+    flex: 1;
+    min-width: 120px;
+    padding: 14px 16px;
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+    box-shadow: var(--shadow);
+    user-select: none;
+  }
+  .nav-tab:hover {
+    border-color: var(--primary-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+  }
+  .nav-tab.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .nav-tab .tab-icon {
+    display: block;
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+  }
+  .nav-tab .tab-num {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    margin-right: 4px;
+  }
+  .nav-tab.active .tab-num {
+    background: rgba(255,255,255,0.3);
+  }
+
+  /* ── Sections ── */
+  .section {
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+  .section.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 28px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    transition: box-shadow 0.3s;
+  }
+  .card:hover { box-shadow: var(--shadow-hover); }
+
+  .card h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 20px 0 10px;
+    color: var(--primary);
+  }
+
+  /* ── Concept Cards ── */
+  .concepts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .concept {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .concept:hover {
+    border-color: var(--primary);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+  }
+  .concept.expanded {
+    border-color: var(--primary);
+    background: var(--primary-bg);
+  }
+  .concept .concept-icon {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+  }
+  .concept .concept-title {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  .concept .concept-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+  .concept .concept-detail {
+    display: none;
+    margin-top: 12px;
+    text-align: left;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .concept.expanded .concept-detail { display: block; }
+
+  /* ── Flow Diagram ── */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 20px 0;
+  }
+  .flow-step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    position: relative;
+    padding: 16px 0;
+  }
+  .flow-step::before {
+    content: '';
+    position: absolute;
+    left: 23px;
+    top: 48px;
+    bottom: -16px;
+    width: 2px;
+    background: var(--border);
+  }
+  .flow-step:last-child::before { display: none; }
+
+  .flow-num {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: white;
+    z-index: 1;
+  }
+  .flow-content {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .flow-content:hover {
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary-light);
+  }
+  .flow-content.expanded {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-hover);
+  }
+  .flow-title {
+    font-weight: 600;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .flow-title .arrow {
+    transition: transform 0.3s;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+  .flow-content.expanded .flow-title .arrow { transform: rotate(90deg); }
+  .flow-summary {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+  .flow-detail {
+    display: none;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 0.95rem;
+  }
+  .flow-content.expanded .flow-detail { display: block; }
+
+  /* ── Step Screenshots (mock) ── */
+  .mock-ui {
+    background: #1E1E2E;
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin: 12px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: #CDD6F4;
+    overflow-x: auto;
+    position: relative;
+  }
+  .mock-ui .mock-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #313244;
+  }
+  .mock-ui .mock-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .mock-ui .mock-dot.red { background: #F38BA8; }
+  .mock-ui .mock-dot.yellow { background: #F9E2AF; }
+  .mock-ui .mock-dot.green { background: #A6E3A1; }
+  .mock-ui .cmd { color: #89B4FA; }
+  .mock-ui .flag { color: #CBA6F7; }
+  .mock-ui .str { color: #A6E3A1; }
+  .mock-ui .comment { color: #6C7086; }
+  .mock-ui .output { color: #BAC2DE; opacity: 0.8; }
+
+  /* ── GitLab UI Mock ── */
+  .gl-mock {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin: 12px 0;
+  }
+  .gl-mock-header {
+    background: #292961;
+    color: white;
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .gl-mock-body { padding: 16px; }
+  .gl-mock .gl-btn {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .gl-btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+  .gl-btn-success { background: var(--success); color: white; border-color: var(--success); }
+  .gl-btn-accent { background: var(--accent); color: white; border-color: var(--accent); }
+  .gl-mock .gl-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    margin: 6px 0;
+    font-family: inherit;
+  }
+  .gl-mock .gl-select {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    margin: 6px 0;
+    background: white;
+  }
+  .gl-mock label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 12px;
+  }
+
+  /* ── Highlight Pulse ── */
+  .pulse-highlight {
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(107,79,187,0.3); }
+    50% { box-shadow: 0 0 0 8px rgba(107,79,187,0); }
+  }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .badge-primary { background: var(--primary-bg); color: var(--primary); }
+  .badge-success { background: var(--success-bg); color: var(--success); }
+  .badge-warning { background: var(--warning-bg); color: var(--warning); }
+  .badge-danger { background: var(--danger-bg); color: var(--danger); }
+  .badge-info { background: var(--info-bg); color: var(--info); }
+
+  /* ── Tips ── */
+  .tip {
+    padding: 14px 18px;
+    border-radius: var(--radius-sm);
+    margin: 14px 0;
+    font-size: 0.9rem;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .tip-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+  .tip-success { background: var(--success-bg); border-left: 3px solid var(--success); }
+  .tip-warning { background: var(--warning-bg); border-left: 3px solid var(--warning); }
+  .tip-danger { background: var(--danger-bg); border-left: 3px solid var(--danger); }
+  .tip-info { background: var(--info-bg); border-left: 3px solid var(--info); }
+
+  /* ── Interactive Flow Chart ── */
+  .flowchart {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin: 24px 0;
+    align-items: center;
+  }
+  .fc-node {
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px solid;
+    min-width: 120px;
+  }
+  .fc-node:hover { transform: scale(1.05); }
+  .fc-arrow {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+  }
+  .fc-branch { background: var(--info-bg); border-color: var(--info); color: var(--info); }
+  .fc-code { background: var(--warning-bg); border-color: var(--warning); color: #8a6300; }
+  .fc-commit { background: var(--success-bg); border-color: var(--success); color: var(--success); }
+  .fc-push { background: var(--primary-bg); border-color: var(--primary); color: var(--primary); }
+  .fc-mr { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .fc-merge { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
+
+  /* ── Accordion FAQ ── */
+  .faq-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .faq-q {
+    padding: 14px 18px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+  }
+  .faq-q:hover { background: var(--bg); }
+  .faq-a {
+    display: none;
+    padding: 0 18px 16px;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+  }
+  .faq-item.open .faq-a { display: block; }
+  .faq-item.open .faq-q { color: var(--primary); }
+  .faq-item .faq-arrow { transition: transform 0.3s; }
+  .faq-item.open .faq-arrow { transform: rotate(180deg); }
+
+  /* ── Cheatsheet Table ── */
+  .cheat-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 14px 0;
+    font-size: 0.9rem;
+  }
+  .cheat-table th {
+    background: var(--primary);
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+  }
+  .cheat-table th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+  .cheat-table th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+  .cheat-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cheat-table tr:last-child td:first-child { border-radius: 0 0 0 var(--radius-sm); }
+  .cheat-table tr:last-child td:last-child { border-radius: 0 0 var(--radius-sm) 0; }
+  .cheat-table tr:hover td { background: var(--bg); }
+  .cheat-table code {
+    background: #1E1E2E;
+    color: #89B4FA;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 1.6rem; }
+    .nav-tabs { flex-wrap: nowrap; }
+    .nav-tab { min-width: 80px; padding: 10px 8px; font-size: 0.78rem; }
+    .nav-tab .tab-icon { font-size: 1.2rem; }
+    .concepts { grid-template-columns: 1fr; }
+    .flowchart { flex-direction: column; }
+    .fc-arrow { transform: rotate(90deg); }
+    .card { padding: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ Hero ══════════ -->
+<div class="hero">
+  <div class="gitlab-logo">🦊</div>
+  <h1>GitLab Guide for Testers</h1>
+  <p>คู่มือ Git & GitLab แบบเข้าใจง่าย สำหรับทีม MCS Cloud</p>
+</div>
+
+<!-- ══════════ Nav Tabs ══════════ -->
+<div class="nav-tabs container">
+  <div class="nav-tab active" onclick="showSection('concepts')">
+    <span class="tab-icon">💡</span>
+    <span class="tab-num">1</span> แนวคิด
+  </div>
+  <div class="nav-tab" onclick="showSection('flow')">
+    <span class="tab-icon">🔄</span>
+    <span class="tab-num">2</span> Flow
+  </div>
+  <div class="nav-tab" onclick="showSection('steps')">
+    <span class="tab-icon">👆</span>
+    <span class="tab-num">3</span> ขั้นตอน
+  </div>
+  <div class="nav-tab" onclick="showSection('terminal')">
+    <span class="tab-icon">⌨️</span>
+    <span class="tab-num">4</span> Terminal
+  </div>
+  <div class="nav-tab" onclick="showSection('faq')">
+    <span class="tab-icon">❓</span>
+    <span class="tab-num">5</span> FAQ
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ══════════ Section 1: Concepts ══════════ -->
+<div class="section active" id="sec-concepts">
+  <div class="card">
+    <h2>💡 Git คืออะไร? ทำไมต้องใช้?</h2>
+    <p>ลองนึกภาพว่าทีม 5 คนแก้ไฟล์เดียวกันพร้อมกัน — ถ้าไม่มี Git จะปนกันหมด! Git ช่วยให้ทุกคนทำงานแยกกัน แล้วรวมกันทีหลังได้อย่างปลอดภัย</p>
+
+    <div class="concepts">
+      <div class="concept" onclick="toggleConcept(this)">
+        <div class="concept-icon">🌳</div>
+        <div class="concept-title">Branch</div>
+        <div class="concept-subtitle">สำเนาของ code</div>
+        <div class="concept-detail">
+          <strong>เปรียบเหมือน:</strong> สมุดทดลอง<br><br>
+          เวลาจะแก้ code เราไม่แก้ใน <code>main</code> โดยตรง แต่สร้าง "กิ่ง" ออกมาเพื่อทดลองแก้ ถ้าพังก็ลบกิ่งทิ้ง <code>main</code> ยังปลอดภัย<br><br>
+          <span class="badge badge-info">main</span> = code ที่ใช้จริง (production)<br>
+          <span class="badge badge-success">feature/xxx</span> = กิ่งที่เราสร้างเพื่อทำงาน
+        </div>
+      </div>
+
+      <div class="concept" onclick="toggleConcept(this)">
+        <div class="concept-icon">💾</div>
+        <div class="concept-title">Commit</div>
+        <div class="concept-subtitle">บันทึกจุดเซฟ</div>
+        <div class="concept-detail">
+          <strong>เปรียบเหมือน:</strong> กด Save Game<br><br>
+          ทุกครั้งที่แก้ code เสร็จ เรา "commit" เพื่อบันทึกไว้ พร้อมเขียนข้อความว่าแก้อะไร ถ้าพลาดสามารถย้อนกลับมาจุดนี้ได้<br><br>
+          <span class="badge badge-warning">สำคัญ:</span> เขียน commit message ให้ชัดเจน!
+        </div>
+      </div>
+
+      <div class="concept" onclick="toggleConcept(this)">
+        <div class="concept-icon">🚀</div>
+        <div class="concept-title">Push</div>
+        <div class="concept-subtitle">อัปโหลดขึ้น GitLab</div>
+        <div class="concept-detail">
+          <strong>เปรียบเหมือน:</strong> อัปโหลดงานขึ้น Cloud<br><br>
+          Commit = บันทึกในเครื่องตัวเอง<br>
+          Push = ส่งขึ้น GitLab ให้คนอื่นเห็น<br><br>
+          <span class="badge badge-danger">ถ้าไม่ push</span> คนอื่นจะไม่เห็นงานเรา!
+        </div>
+      </div>
+
+      <div class="concept" onclick="toggleConcept(this)">
+        <div class="concept-icon">🔀</div>
+        <div class="concept-title">Merge Request</div>
+        <div class="concept-subtitle">ขอรวม code</div>
+        <div class="concept-detail">
+          <strong>เปรียบเหมือน:</strong> ส่งงานให้หัวหน้าตรวจ<br><br>
+          เมื่อทำงานเสร็จ สร้าง Merge Request (MR) เพื่อ:<br>
+          1. ให้คนอื่นรีวิว code<br>
+          2. ตรวจสอบว่าไม่มีข้อผิดพลาด<br>
+          3. รวมเข้า <code>main</code> อย่างปลอดภัย<br><br>
+          <span class="badge badge-primary">MR = Pull Request (PR)</span> ใน GitHub
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🎯 กฎทอง 3 ข้อ</h2>
+    <div class="tip tip-danger">
+      <span class="tip-icon">🚫</span>
+      <div><strong>ห้าม!</strong> แก้ code ใน branch <code>main</code> โดยตรง — ต้องสร้าง branch ใหม่เสมอ</div>
+    </div>
+    <div class="tip tip-success">
+      <span class="tip-icon">✅</span>
+      <div><strong>ทำทุกครั้ง!</strong> เขียน commit message ภาษาไทยให้ชัด เช่น "แก้ bug หน้า login โหลดช้า"</div>
+    </div>
+    <div class="tip tip-warning">
+      <span class="tip-icon">⚠️</span>
+      <div><strong>ระวัง!</strong> ก่อนเริ่มงานทุกครั้ง <code>git pull</code> ดึง code ล่าสุดก่อนเสมอ</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ Section 2: Flow ══════════ -->
+<div class="section" id="sec-flow">
+  <div class="card">
+    <h2>🔄 ภาพรวม Flow การทำงาน</h2>
+    <p>คลิกแต่ละขั้นตอนเพื่อดูรายละเอียด</p>
+
+    <div class="flowchart">
+      <div class="fc-node fc-branch" onclick="highlightFlow(this, 'สร้าง Branch ใหม่จาก main เพื่อแยกงานออกมา')">
+        🌳 สร้าง Branch
+      </div>
+      <div class="fc-arrow">→</div>
+      <div class="fc-node fc-code" onclick="highlightFlow(this, 'แก้ไข code ตามงานที่ได้รับมอบหมาย')">
+        ✏️ แก้ Code
+      </div>
+      <div class="fc-arrow">→</div>
+      <div class="fc-node fc-commit" onclick="highlightFlow(this, 'Commit = บันทึกการเปลี่ยนแปลง พร้อมข้อความอธิบาย')">
+        💾 Commit
+      </div>
+      <div class="fc-arrow">→</div>
+      <div class="fc-node fc-push" onclick="highlightFlow(this, 'Push ขึ้น GitLab เพื่อให้คนอื่นเห็น')">
+        🚀 Push
+      </div>
+      <div class="fc-arrow">→</div>
+      <div class="fc-node fc-mr" onclick="highlightFlow(this, 'สร้าง Merge Request ให้คนรีวิว code')">
+        🔀 สร้าง MR
+      </div>
+      <div class="fc-arrow">→</div>
+      <div class="fc-node fc-merge" onclick="highlightFlow(this, 'เมื่อรีวิวผ่าน merge เข้า main — เสร็จ!')">
+        ✅ Merge!
+      </div>
+    </div>
+
+    <div id="flow-explanation" class="tip tip-info" style="display:none; transition: all 0.3s;">
+      <span class="tip-icon">💬</span>
+      <div id="flow-explanation-text"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🗺️ ตัวอย่างสถานการณ์จริง</h2>
+    <div class="tip tip-info">
+      <span class="tip-icon">📋</span>
+      <div>
+        <strong>โจทย์:</strong> ได้รับ ticket "แก้ bug ปุ่ม Export ไม่ทำงาน" <br><br>
+        <strong>ขั้นตอน:</strong><br>
+        1. <code>git pull origin main</code> — ดึง code ล่าสุด<br>
+        2. <code>git checkout -b fix/export-button-broken</code> — สร้าง branch<br>
+        3. แก้ code... ทดสอบ...<br>
+        4. <code>git add .</code> — เตรียมไฟล์<br>
+        5. <code>git commit -m "fix: แก้ปุ่ม Export ไม่ทำงาน"</code> — บันทึก<br>
+        6. <code>git push origin fix/export-button-broken</code> — อัปโหลด<br>
+        7. เปิด GitLab → สร้าง Merge Request<br>
+        8. รอรีวิว → Merge! ✅
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ Section 3: Steps (GitLab Web UI) ══════════ -->
+<div class="section" id="sec-steps">
+  <div class="card">
+    <h2>👆 วิธีใช้ GitLab Web UI</h2>
+    <p>สำหรับคนที่ไม่ถนัด terminal — ทำผ่าน GitLab เว็บได้เลย!</p>
+  </div>
+
+  <div class="flow">
+    <!-- Step 1 -->
+    <div class="flow-step">
+      <div class="flow-num" style="background: var(--info)">1</div>
+      <div class="flow-content" onclick="toggleFlow(this)">
+        <div class="flow-title">
+          🌳 สร้าง Branch ใหม่จาก GitLab
+          <span class="arrow">▶</span>
+        </div>
+        <div class="flow-summary">Repository → Branches → New branch</div>
+        <div class="flow-detail">
+          <div class="gl-mock">
+            <div class="gl-mock-header">🦊 GitLab — Repository → Branches</div>
+            <div class="gl-mock-body">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                <strong>Branches</strong>
+                <span class="gl-btn gl-btn-primary pulse-highlight" style="cursor:default">+ New branch</span>
+              </div>
+              <label>Branch name</label>
+              <input class="gl-input" value="fix/export-button-broken" readonly>
+              <label>Create from</label>
+              <select class="gl-select">
+                <option>main</option>
+              </select>
+              <div style="margin-top:16px">
+                <span class="gl-btn gl-btn-success" style="cursor:default">Create branch</span>
+              </div>
+            </div>
+          </div>
+          <div class="tip tip-success">
+            <span class="tip-icon">💡</span>
+            <div><strong>ตั้งชื่อ Branch:</strong><br>
+              <code>fix/xxx</code> = แก้ bug<br>
+              <code>feat/xxx</code> = เพิ่มฟีเจอร์ใหม่<br>
+              <code>test/xxx</code> = เพิ่ม test<br>
+              ใช้ภาษาอังกฤษ ขีดกลาง (-) คั่นคำ
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="flow-step">
+      <div class="flow-num" style="background: var(--warning)">2</div>
+      <div class="flow-content" onclick="toggleFlow(this)">
+        <div class="flow-title">
+          ✏️ แก้ไขไฟล์ผ่าน Web IDE
+          <span class="arrow">▶</span>
+        </div>
+        <div class="flow-summary">เปิดไฟล์ → Edit → Web IDE</div>
+        <div class="flow-detail">
+          <div class="gl-mock">
+            <div class="gl-mock-header">🦊 GitLab — Web IDE</div>
+            <div class="gl-mock-body">
+              <div style="display:flex;gap:12px;margin-bottom:12px">
+                <span class="badge badge-info">fix/export-button-broken</span>
+                <span style="color:var(--text-secondary);font-size:0.85rem">← ตรวจสอบว่าอยู่ branch ที่ถูกต้อง!</span>
+              </div>
+              <div style="background:#1E1E2E;padding:12px;border-radius:6px;color:#CDD6F4;font-family:'JetBrains Mono',monospace;font-size:0.82rem;">
+                <div style="color:#6C7086">// แก้ไข code ตรงนี้</div>
+                <div><span style="color:#C678DD">function</span> <span style="color:#61AFEF">exportData</span>() {</div>
+                <div style="padding-left:20px"><span style="color:#6C7086">// แก้ bug: เพิ่ม loading state</span></div>
+                <div style="padding-left:20px;color:#A6E3A1">showLoading(true);</div>
+                <div>}</div>
+              </div>
+              <div style="margin-top:12px;display:flex;gap:8px">
+                <span class="gl-btn gl-btn-primary" style="cursor:default">Commit to fix/export-button-broken</span>
+              </div>
+            </div>
+          </div>
+          <div class="tip tip-warning">
+            <span class="tip-icon">⚠️</span>
+            <div><strong>ตรวจสอบทุกครั้ง!</strong> ดูที่มุมซ้ายบนว่า branch name ถูกต้อง ห้ามแก้ใน <code>main</code>!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="flow-step">
+      <div class="flow-num" style="background: var(--success)">3</div>
+      <div class="flow-content" onclick="toggleFlow(this)">
+        <div class="flow-title">
+          💾 Commit ผ่าน Web IDE
+          <span class="arrow">▶</span>
+        </div>
+        <div class="flow-summary">เขียน commit message → Commit</div>
+        <div class="flow-detail">
+          <div class="gl-mock">
+            <div class="gl-mock-header">🦊 GitLab — Commit Changes</div>
+            <div class="gl-mock-body">
+              <label>Commit message</label>
+              <input class="gl-input" value="fix: แก้ปุ่ม Export ไม่ทำงาน เพิ่ม loading state" readonly>
+              <label>Target branch</label>
+              <input class="gl-input" value="fix/export-button-broken" readonly style="background:#f5f5f5">
+              <div style="margin-top:12px">
+                <span class="gl-btn gl-btn-success" style="cursor:default">Commit changes</span>
+              </div>
+            </div>
+          </div>
+          <div class="tip tip-info">
+            <span class="tip-icon">📝</span>
+            <div><strong>วิธีเขียน Commit Message ที่ดี:</strong><br><br>
+              <code>fix: แก้ปุ่ม Export ไม่ทำงาน</code> ✅ ชัดเจน<br>
+              <code>feat: เพิ่มฟีเจอร์ค้นหา ticket</code> ✅ ชัดเจน<br>
+              <code>แก้ bug</code> ❌ ไม่รู้ว่าแก้อะไร<br>
+              <code>update</code> ❌ ไม่มีรายละเอียด
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="flow-step">
+      <div class="flow-num" style="background: var(--accent)">4</div>
+      <div class="flow-content" onclick="toggleFlow(this)">
+        <div class="flow-title">
+          🔀 สร้าง Merge Request
+          <span class="arrow">▶</span>
+        </div>
+        <div class="flow-summary">หลัง push → สร้าง MR → assign reviewer</div>
+        <div class="flow-detail">
+          <div class="gl-mock">
+            <div class="gl-mock-header">🦊 GitLab — New Merge Request</div>
+            <div class="gl-mock-body">
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
+                <span class="badge badge-info">fix/export-button-broken</span>
+                <span>→</span>
+                <span class="badge badge-success">main</span>
+              </div>
+              <label>Title</label>
+              <input class="gl-input" value="fix: แก้ปุ่ม Export ไม่ทำงาน" readonly>
+              <label>Description</label>
+              <textarea class="gl-input" style="height:80px;resize:none" readonly>## สิ่งที่แก้ไข
+- เพิ่ม loading state ให้ปุ่ม Export
+- แก้ function exportData()
+
+## วิธีทดสอบ
+1. เข้าหน้า Ticket
+2. กดปุ่ม Export
+3. ตรวจสอบว่ามี loading แสดง</textarea>
+              <label>Assignee</label>
+              <select class="gl-select"><option>เลือกคนรีวิว...</option></select>
+              <div style="margin-top:16px">
+                <span class="gl-btn gl-btn-accent" style="cursor:default">Create merge request</span>
+              </div>
+            </div>
+          </div>
+          <div class="tip tip-success">
+            <span class="tip-icon">🎉</span>
+            <div><strong>เสร็จ!</strong> รอให้คนรีวิว approve แล้ว merge เข้า main ได้เลย</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ Section 4: Terminal ══════════ -->
+<div class="section" id="sec-terminal">
+  <div class="card">
+    <h2>⌨️ คำสั่ง Terminal (สำหรับคนอยากลอง)</h2>
+    <p>ถ้าอยากเร็วกว่า Web UI ลองใช้ terminal!</p>
+
+    <h3>🟢 ก่อนเริ่มงาน (ทำทุกครั้ง!)</h3>
+    <div class="mock-ui">
+      <div class="mock-bar">
+        <div class="mock-dot red"></div>
+        <div class="mock-dot yellow"></div>
+        <div class="mock-dot green"></div>
+      </div>
+      <div><span class="comment"># ดึง code ล่าสุดจาก main</span></div>
+      <div><span class="cmd">git</span> <span class="flag">checkout</span> main</div>
+      <div><span class="cmd">git</span> <span class="flag">pull</span> origin main</div>
+      <div></div>
+      <div><span class="comment"># สร้าง branch ใหม่</span></div>
+      <div><span class="cmd">git</span> <span class="flag">checkout</span> <span class="flag">-b</span> <span class="str">fix/export-button-broken</span></div>
+      <div class="output">Switched to a new branch 'fix/export-button-broken'</div>
+    </div>
+
+    <h3>🟡 ระหว่างทำงาน</h3>
+    <div class="mock-ui">
+      <div class="mock-bar">
+        <div class="mock-dot red"></div>
+        <div class="mock-dot yellow"></div>
+        <div class="mock-dot green"></div>
+      </div>
+      <div><span class="comment"># ดูว่าแก้ไฟล์อะไรไปบ้าง</span></div>
+      <div><span class="cmd">git</span> <span class="flag">status</span></div>
+      <div class="output">modified:   controllers/Export.php</div>
+      <div class="output">modified:   views/ticket/index.php</div>
+      <div></div>
+      <div><span class="comment"># เพิ่มไฟล์ที่จะ commit (ทุกไฟล์)</span></div>
+      <div><span class="cmd">git</span> <span class="flag">add</span> <span class="str">.</span></div>
+      <div></div>
+      <div><span class="comment"># commit พร้อมข้อความ</span></div>
+      <div><span class="cmd">git</span> <span class="flag">commit</span> <span class="flag">-m</span> <span class="str">"fix: แก้ปุ่ม Export ไม่ทำงาน"</span></div>
+      <div class="output">[fix/export-button-broken abc1234] fix: แก้ปุ่ม Export ไม่ทำงาน</div>
+    </div>
+
+    <h3>🔵 ส่งงานขึ้น GitLab</h3>
+    <div class="mock-ui">
+      <div class="mock-bar">
+        <div class="mock-dot red"></div>
+        <div class="mock-dot yellow"></div>
+        <div class="mock-dot green"></div>
+      </div>
+      <div><span class="comment"># push ขึ้น GitLab (ครั้งแรกใช้ -u)</span></div>
+      <div><span class="cmd">git</span> <span class="flag">push</span> <span class="flag">-u</span> origin <span class="str">fix/export-button-broken</span></div>
+      <div class="output">remote:</div>
+      <div class="output">remote: To create a merge request, visit:</div>
+      <div class="output">remote:   https://gitlab.com/.../merge_requests/new</div>
+      <div></div>
+      <div><span class="comment"># คลิก link ด้านบนเพื่อสร้าง MR!</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📋 Cheatsheet คำสั่งที่ใช้บ่อย</h2>
+    <table class="cheat-table">
+      <thead>
+        <tr>
+          <th>คำสั่ง</th>
+          <th>ทำอะไร</th>
+          <th>ใช้เมื่อ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>git status</code></td>
+          <td>ดูสถานะไฟล์</td>
+          <td>อยากรู้ว่าแก้ไฟล์อะไรไป</td>
+        </tr>
+        <tr>
+          <td><code>git pull</code></td>
+          <td>ดึง code ล่าสุด</td>
+          <td>ก่อนเริ่มงานทุกครั้ง</td>
+        </tr>
+        <tr>
+          <td><code>git checkout -b ชื่อ</code></td>
+          <td>สร้าง branch ใหม่</td>
+          <td>เริ่มงานใหม่</td>
+        </tr>
+        <tr>
+          <td><code>git checkout ชื่อ</code></td>
+          <td>สลับ branch</td>
+          <td>ไปทำงาน branch อื่น</td>
+        </tr>
+        <tr>
+          <td><code>git add .</code></td>
+          <td>เพิ่มทุกไฟล์เข้า staging</td>
+          <td>เตรียม commit</td>
+        </tr>
+        <tr>
+          <td><code>git commit -m "ข้อความ"</code></td>
+          <td>บันทึกการเปลี่ยนแปลง</td>
+          <td>แก้ code เสร็จ</td>
+        </tr>
+        <tr>
+          <td><code>git push</code></td>
+          <td>อัปโหลดขึ้น GitLab</td>
+          <td>ส่งงานให้คนอื่นเห็น</td>
+        </tr>
+        <tr>
+          <td><code>git log --oneline -5</code></td>
+          <td>ดู commits ล่าสุด</td>
+          <td>ตรวจสอบ history</td>
+        </tr>
+        <tr>
+          <td><code>git diff</code></td>
+          <td>ดูว่าเปลี่ยนอะไรไป</td>
+          <td>ก่อน commit</td>
+        </tr>
+        <tr>
+          <td><code>git stash</code></td>
+          <td>เก็บงานชั่วคราว</td>
+          <td>ต้องสลับ branch แต่ยังไม่อยาก commit</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════ Section 5: FAQ ══════════ -->
+<div class="section" id="sec-faq">
+  <div class="card">
+    <h2>❓ คำถามที่พบบ่อย</h2>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">
+        🤔 commit กับ push ต่างกันยังไง?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">
+        <strong>Commit</strong> = บันทึกในเครื่องตัวเอง (เหมือนกด Save)<br>
+        <strong>Push</strong> = ส่งขึ้น GitLab (เหมือนอัปโหลดขึ้น Cloud)<br><br>
+        ต้องทำ commit ก่อน แล้วค่อย push เสมอ สามารถ commit หลายครั้งแล้ว push ทีเดียวได้
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">
+        😱 commit ผิด branch ทำไงดี?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">
+        <strong>ถ้ายังไม่ push:</strong><br>
+        <code>git reset HEAD~1</code> — ยกเลิก commit ล่าสุด (ไฟล์ยังอยู่)<br>
+        แล้วสลับไป branch ที่ถูกต้อง แล้ว commit ใหม่<br><br>
+        <strong>ถ้า push ไปแล้ว:</strong><br>
+        แจ้งพี่เต้ย! อย่าแก้เอง เดี๋ยวพี่ช่วย
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">
+        🔴 push แล้วขึ้น error "rejected" คืออะไร?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">
+        แปลว่า branch บน GitLab มีอะไรใหม่กว่าในเครื่อง ให้ทำ:<br><br>
+        <code>git pull origin ชื่อ-branch</code><br><br>
+        ถ้ามี conflict (ไฟล์ชนกัน) — ดูไฟล์ที่มีเครื่องหมาย <code>&lt;&lt;&lt;&lt;</code> แก้ให้เรียบร้อย แล้ว commit + push ใหม่<br><br>
+        ถ้าไม่มั่นใจ แจ้งพี่เต้ย!
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">
+        🌳 ตั้งชื่อ branch ยังไงดี?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">
+        ใช้ prefix ตามประเภทงาน:<br><br>
+        <code>fix/ชื่อ-bug</code> — แก้ bug<br>
+        <code>feat/ชื่อ-feature</code> — เพิ่มฟีเจอร์ใหม่<br>
+        <code>test/ชื่อ-test</code> — เพิ่ม test<br>
+        <code>refactor/ชื่อ-งาน</code> — ปรับโครงสร้าง code<br><br>
+        ตัวอย่าง: <code>fix/ticket-export-button</code>, <code>feat/ticket-mr-creation</code>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">
+        📝 Merge Request ต้องเขียนอะไรบ้าง?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">
+        <strong>Title:</strong> สั้น ชัด ตรงประเด็น<br>
+        เช่น "fix: แก้ปุ่ม Export ไม่ทำงาน"<br><br>
+        <strong>Description:</strong><br>
+        1. <strong>สิ่งที่แก้ไข</strong> — บอกว่าแก้อะไรบ้าง<br>
+        2. <strong>วิธีทดสอบ</strong> — บอกว่าต้องทดสอบยังไง<br>
+        3. <strong>Screenshot</strong> — ถ้ามีหน้า UI เปลี่ยน ถ่ายรูปแนบ<br><br>
+        <strong>Assign:</strong> เลือกคนรีวิว (ปกติเลือกพี่เต้ย)
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">
+        💥 merge conflict คืออะไร? แก้ยังไง?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">
+        เกิดเมื่อ 2 คนแก้ไฟล์เดียวกันตรงบรรทัดเดียวกัน Git ไม่รู้ว่าจะเอาของใคร<br><br>
+        <strong>วิธีแก้:</strong><br>
+        1. เปิดไฟล์ที่ conflict<br>
+        2. หาเครื่องหมาย <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> และ <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code><br>
+        3. เลือกว่าจะเอา code ส่วนไหน (หรือรวมทั้งสอง)<br>
+        4. ลบเครื่องหมาย conflict ออก<br>
+        5. <code>git add .</code> แล้ว <code>git commit</code><br><br>
+        <div class="tip tip-warning" style="margin:0">
+          <span class="tip-icon">💡</span>
+          <div>ถ้าไม่มั่นใจ <strong>อย่าแก้เอง!</strong> แจ้งพี่เต้ยช่วยดู conflict ให้</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">
+        🔄 git pull กับ git fetch ต่างกันยังไง?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">
+        <code>git fetch</code> = ดึงข้อมูลมาดู แต่ไม่แก้ไฟล์ในเครื่อง<br>
+        <code>git pull</code> = fetch + merge (ดึงมาและรวมเข้า code เลย)<br><br>
+        <strong>สำหรับมือใหม่:</strong> ใช้ <code>git pull</code> เลย ง่ายกว่า!
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">
+        🆘 ทำพัง อยากย้อนกลับทำไงดี?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">
+        <strong>ย้อนไฟล์เดียว:</strong><br>
+        <code>git checkout -- ชื่อไฟล์</code><br><br>
+        <strong>ย้อน commit ล่าสุด (ไฟล์ยังอยู่):</strong><br>
+        <code>git reset HEAD~1</code><br><br>
+        <strong>ย้อนทุกอย่างเหมือน main:</strong><br>
+        <code>git checkout main</code> แล้วสร้าง branch ใหม่<br><br>
+        <div class="tip tip-danger" style="margin:0">
+          <span class="tip-icon">🚫</span>
+          <div><strong>ห้ามใช้</strong> <code>git reset --hard</code> หรือ <code>--force</code> โดยไม่ปรึกษาพี่เต้ยก่อน!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- container -->
+
+<div class="footer">
+  <p>Made with ❤️ by MCS Cloud Team — v1.0</p>
+  <p style="margin-top:4px;font-size:0.8rem">มีคำถาม? ถามพี่เต้ยได้เลย!</p>
+</div>
+
+<script>
+  // ── Tab Navigation ──
+  function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('sec-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+    window.scrollTo({ top: 200, behavior: 'smooth' });
+  }
+
+  // ── Concept Cards ──
+  function toggleConcept(el) {
+    el.classList.toggle('expanded');
+  }
+
+  // ── Flow Steps ──
+  function toggleFlow(el) {
+    const wasExpanded = el.classList.contains('expanded');
+    // close all
+    el.closest('.flow').querySelectorAll('.flow-content').forEach(f => f.classList.remove('expanded'));
+    if (!wasExpanded) el.classList.add('expanded');
+  }
+
+  // ── Flow Chart Explanation ──
+  function highlightFlow(el, text) {
+    document.querySelectorAll('.fc-node').forEach(n => n.style.transform = '');
+    el.style.transform = 'scale(1.1)';
+    const box = document.getElementById('flow-explanation');
+    const txt = document.getElementById('flow-explanation-text');
+    txt.innerHTML = '<strong>' + el.textContent.trim() + '</strong><br>' + text;
+    box.style.display = 'flex';
+  }
+
+  // ── FAQ Accordion ──
+  function toggleFaq(el) {
+    el.classList.toggle('open');
+  }
+</script>
+</body>
+</html>
