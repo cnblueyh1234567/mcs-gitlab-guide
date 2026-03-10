@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MCS Ticket System — สรุประบบ Relation & Scoring</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f1f5f9; color: #1e293b; line-height: 1.7; }
+
+    .hero {
+      background: linear-gradient(135deg, #1d4ed8 0%, #4f46e5 100%);
+      padding: 48px 40px 32px;
+      text-align: center;
+    }
+    .hero h1 { font-size: 2rem; font-weight: 700; color: #fff; }
+    .hero p { color: #bfdbfe; margin-top: 8px; }
+    .badge { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; font-size: 0.75rem; padding: 2px 10px; border-radius: 999px; margin-top: 12px; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+
+    h2 { font-size: 1.3rem; font-weight: 700; color: #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+    h2 .icon { font-size: 1.4rem; }
+    h3 { font-size: 1rem; font-weight: 600; color: #334155; margin-bottom: 12px; }
+
+    .section { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 28px; margin-bottom: 28px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+
+    /* Flow diagram */
+    .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 0; margin: 16px 0; }
+    .flow-step {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 0.85rem;
+      color: #334155;
+      text-align: center;
+      min-width: 140px;
+    }
+    .flow-step.blue { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
+    .flow-step.green { border-color: #22c55e; background: #f0fdf4; color: #15803d; }
+    .flow-step.yellow { border-color: #eab308; background: #fefce8; color: #a16207; }
+    .flow-step.purple { border-color: #a855f7; background: #faf5ff; color: #7e22ce; }
+    .flow-step.red { border-color: #ef4444; background: #fef2f2; color: #b91c1c; }
+    .flow-arrow { color: #94a3b8; font-size: 1.2rem; padding: 0 6px; }
+    .flow-label { font-size: 0.7rem; color: #94a3b8; margin-top: 4px; }
+
+    /* Code block */
+    pre {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 16px 20px;
+      font-size: 0.82rem;
+      color: #a5f3fc;
+      overflow-x: auto;
+      margin: 12px 0;
+      font-family: 'Courier New', monospace;
+    }
+    code { color: #86efac; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 12px; }
+    th { background: #f8fafc; color: #475569; font-weight: 600; padding: 10px 14px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+    td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+
+    /* Score boxes */
+    .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-top: 16px; }
+    .score-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .score-card .label { font-size: 0.75rem; color: #64748b; margin-bottom: 6px; }
+    .score-card .value { font-size: 1.5rem; font-weight: 700; }
+    .score-card .weight { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; }
+    .score-card.s1 .value { color: #1d4ed8; }
+    .score-card.s2 .value { color: #15803d; }
+    .score-card.s3 .value { color: #be185d; }
+    .score-card.s4 .value { color: #c2410c; }
+    .score-card.s5 .value { color: #7e22ce; }
+
+    /* Progress bar */
+    .bar-wrap { background: #e2e8f0; border-radius: 999px; height: 8px; margin-top: 6px; overflow: hidden; }
+    .bar { height: 100%; border-radius: 999px; }
+
+    /* Health badges */
+    .badge-health { display: inline-block; padding: 3px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; }
+    .badge-health.healthy { background: #dcfce7; color: #15803d; }
+    .badge-health.warning { background: #fef9c3; color: #a16207; }
+    .badge-health.critical { background: #fee2e2; color: #b91c1c; }
+
+    /* Tags */
+    .tag { display: inline-block; background: #eff6ff; color: #1d4ed8; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; margin: 2px; border: 1px solid #bfdbfe; }
+    .tag.red { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+    .tag.green { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+    .tag.purple { background: #faf5ff; color: #7e22ce; border-color: #e9d5ff; }
+
+    /* Two col */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* Callout */
+    .callout { background: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 14px 0; font-size: 0.88rem; color: #1e40af; }
+    .callout.yellow { background: #fefce8; border-color: #eab308; color: #854d0e; }
+    .callout.green { background: #f0fdf4; border-color: #22c55e; color: #166534; }
+    .callout.red { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
+
+    /* Phase */
+    .phase { display: flex; gap: 16px; margin: 16px 0; }
+    .phase-num { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; margin-top: 2px; }
+    .phase-num.blue { background: #dbeafe; color: #1d4ed8; }
+    .phase-num.green { background: #dcfce7; color: #15803d; }
+    .phase-content h4 { font-size: 0.9rem; color: #1e293b; margin-bottom: 4px; }
+    .phase-content p { font-size: 0.83rem; color: #64748b; }
+
+    /* Explain box */
+    .explain-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin: 16px 0; }
+    .explain-box h4 { color: #1e293b; font-size: 0.95rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .explain-box p { font-size: 0.85rem; color: #475569; margin-bottom: 8px; }
+    .explain-box .example { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; font-size: 0.82rem; color: #334155; margin-top: 10px; }
+    .explain-box .example b { color: #1d4ed8; }
+
+    .step-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
+    .step-dot { width: 24px; height: 24px; border-radius: 50%; background: #dbeafe; color: #1d4ed8; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+    .step-text { font-size: 0.85rem; color: #475569; }
+    .step-text b { color: #1e293b; }
+
+    footer { text-align: center; color: #94a3b8; font-size: 0.8rem; padding: 32px; }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>MCS Cloud — Ticket Relation & Scoring System</h1>
+  <p>nodesupport · TicketRelation.service.js · StarMapInsights.service.js</p>
+  <span class="badge">เต้ย · 10 มีนาคม 2569</span>
+</div>
+
+<div class="container">
+
+  <!-- ===== 1. OVERVIEW FLOW ===== -->
+  <div class="section">
+    <h2><span class="icon">🔄</span> Flow ภาพรวม — สร้าง/แก้ไข Ticket</h2>
+
+    <h3>เมื่อ Create ticket</h3>
+    <div class="flow">
+      <div class="flow-step blue">POST /ticket/create</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">TicketService.store()</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step green">Insert DB<br/><span class="flow-label">sync</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step yellow">findAndSave<br/>RelatedTickets()<br/><span class="flow-label">async ⚡</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step purple">autoAssign<br/>ModuleTag()<br/><span class="flow-label">async ⚡</span></div>
+    </div>
+
+    <h3 style="margin-top:20px">เมื่อ Update ticket</h3>
+    <div class="flow">
+      <div class="flow-step blue">PUT /ticket/update</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">TicketService.updateTicket()</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step green">Update DB<br/><span class="flow-label">sync</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step red">IF name/desc<br/>เปลี่ยน → recalculate<br/><span class="flow-label">async ⚡</span></div>
+    </div>
+
+    <div class="callout" style="margin-top:16px">
+      ⚡ async ทั้งหมด — ไม่ block response ให้ user รอ
+    </div>
+  </div>
+
+  <!-- ===== 2. TICKET RELATION ===== -->
+  <div class="section">
+    <h2><span class="icon">🔗</span> ticket_relation — ตาราง DB</h2>
+    <table>
+      <thead>
+        <tr><th>Field</th><th>Type</th><th>ความหมาย</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>source_ticket_id</td><td>FK → ticket</td><td>ticket ต้นทาง</td></tr>
+        <tr><td>target_ticket_id</td><td>FK → ticket</td><td>ticket ที่คล้าย</td></tr>
+        <tr><td>relation_type</td><td>varchar</td><td><span class="tag">similar</span> <span class="tag red">recurring_bug</span> <span class="tag purple">duplicate</span></td></tr>
+        <tr><td>similarity_score</td><td>decimal 0–1</td><td>คะแนนความคล้าย</td></tr>
+        <tr><td>suggested_by</td><td>varchar</td><td><span class="tag green">ai</span> (auto) หรือ <span class="tag">user</span> (manual)</td></tr>
+        <tr><td>is_verified</td><td>boolean</td><td>user ยืนยันแล้วหรือยัง (default false)</td></tr>
+        <tr><td>verified_by / verified_at</td><td>FK / timestamp</td><td>ใครยืนยัน เมื่อไหร่</td></tr>
+      </tbody>
+    </table>
+    <div class="callout yellow" style="margin-top:16px">
+      Unique constraint: (source_ticket_id, target_ticket_id) — ถ้ามีอยู่แล้ว → UPDATE score แทน INSERT ซ้ำ
+    </div>
+  </div>
+
+  <!-- ===== 3. SIMILARITY SCORING ===== -->
+  <div class="section">
+    <h2><span class="icon">🎯</span> Similarity Score — Phase 1 (SQL)</h2>
+
+    <pre>
+total_score =
+  ts_rank(search_vector, tsquery)  × 0.40   ← Full-text search (PostgreSQL)
+  + tag_overlap_ratio              × 0.35   ← tags ตรงกัน / tags ทั้งหมด
+  + similarity(ticket_name, ?)    × 0.25   ← pg_trgm (PostgreSQL)
+  + customer_bonus (0.15)                   ← ถ้า customer_id เหมือนกัน
+  + module_overlap × 0.20                   ← ถ้า module tag เหมือนกัน</pre>
+
+    <div class="score-grid">
+      <div class="score-card s1">
+        <div class="label">Full-text Search</div>
+        <div class="value">40%</div>
+        <div class="bar-wrap"><div class="bar" style="width:40%; background:#3b82f6;"></div></div>
+        <div class="weight">ts_rank — PostgreSQL คำนวณจาก search_vector</div>
+      </div>
+      <div class="score-card s2">
+        <div class="label">Tag Overlap</div>
+        <div class="value">35%</div>
+        <div class="bar-wrap"><div class="bar" style="width:35%; background:#22c55e;"></div></div>
+        <div class="weight">COUNT(tag ตรงกัน) / COUNT(tag ทั้งหมด)</div>
+      </div>
+      <div class="score-card s3">
+        <div class="label">Trigram Similarity</div>
+        <div class="value">25%</div>
+        <div class="bar-wrap"><div class="bar" style="width:25%; background:#be185d;"></div></div>
+        <div class="weight">similarity() — pg_trgm extension</div>
+      </div>
+      <div class="score-card s4">
+        <div class="label">Customer Bonus</div>
+        <div class="value">+0.15</div>
+        <div class="bar-wrap"><div class="bar" style="width:15%; background:#c2410c;"></div></div>
+        <div class="weight">customer_id ตรงกัน</div>
+      </div>
+      <div class="score-card s5">
+        <div class="label">Module Bonus</div>
+        <div class="value">+0.20</div>
+        <div class="bar-wrap"><div class="bar" style="width:20%; background:#7e22ce;"></div></div>
+        <div class="weight">module tag (tag_type=3) ตรงกัน</div>
+      </div>
+    </div>
+
+    <!-- ===== ts_rank อธิบาย ===== -->
+    <div style="margin-top:28px">
+      <h3>🔍 ts_rank คืออะไร — Full-text Search</h3>
+
+      <div class="explain-box">
+        <h4>📌 ทำงานยังไง?</h4>
+        <p>PostgreSQL เก็บ column พิเศษชื่อ <code>search_vector</code> ไว้ใน ticket table — เป็นการแปลงข้อความใน ticket ให้เป็นรูปแบบที่ค้นหาได้เร็ว (tsvector)</p>
+
+        <div class="step-row">
+          <div class="step-dot">1</div>
+          <div class="step-text"><b>เก็บ search_vector:</b> เมื่อสร้าง ticket → PostgreSQL แปลง ticket_name + ticket_desc เป็น tsvector เก็บไว้ล่วงหน้า</div>
+        </div>
+        <div class="step-row">
+          <div class="step-dot">2</div>
+          <div class="step-text"><b>แปลงคำค้นหา:</b> ตอนหา related → แยกคำในชื่อ ticket ใหม่ออกมา แล้วแปลงเป็น tsquery</div>
+        </div>
+        <div class="step-row">
+          <div class="step-dot">3</div>
+          <div class="step-text"><b>ts_rank คำนวณ:</b> เปรียบ tsquery กับ search_vector ของทุก ticket → คืนค่า 0–1 ว่าตรงกันมากแค่ไหน</div>
+        </div>
+
+        <div class="example">
+          <b>ตัวอย่าง:</b><br/>
+          ticket ใหม่: <b>"ปัญหา Login ไม่ได้"</b><br/>
+          → แยกคำ: ["ปัญหา", "Login", "ไม่ได้"]<br/>
+          → สร้าง tsquery: <b>'ปัญหา' | 'Login' | 'ไม่ได้'</b><br/><br/>
+          ticket เก่า A: "User Login ไม่ผ่าน" → search_vector มีคำ Login, ผ่าน → <b>ts_rank = 0.75</b><br/>
+          ticket เก่า B: "แก้ UI หน้า Dashboard" → search_vector ไม่มีคำเลย → <b>ts_rank ≈ 0</b>
+        </div>
+      </div>
+
+      <div class="callout green">
+        <b>ข้อดี ts_rank:</b> เร็วมาก เพราะ search_vector ถูก index ไว้แล้ว ไม่ต้องอ่านทุก row<br/>
+        <b>ข้อเสีย:</b> ดูแค่ "คำตรงกัน" — ถ้าใช้คำต่างกันแต่ความหมายเดียวกัน score จะต่ำ
+      </div>
+    </div>
+
+    <!-- ===== trigram อธิบาย ===== -->
+    <div style="margin-top:28px">
+      <h3>🔤 similarity() คืออะไร — pg_trgm Trigram</h3>
+
+      <div class="explain-box">
+        <h4>📌 Trigram คืออะไร?</h4>
+        <p>แบ่งข้อความออกเป็น <b>กลุ่มละ 3 ตัวอักษร</b> แล้วนับว่ากลุ่มที่เหมือนกันมีกี่กลุ่ม</p>
+
+        <div class="example">
+          <b>ตัวอย่าง:</b><br/>
+          คำว่า <b>"Login"</b> แบ่งเป็น trigrams: <b>"Log"</b>, <b>"ogi"</b>, <b>"gin"</b><br/>
+          คำว่า <b>"Loginn"</b> แบ่งเป็น trigrams: <b>"Log"</b>, <b>"ogi"</b>, <b>"gin"</b>, <b>"inn"</b><br/><br/>
+          มี trigram เหมือนกัน 3 จาก 4 → <b>similarity ≈ 0.75</b>
+        </div>
+
+        <div style="margin-top:16px">
+          <div class="step-row">
+            <div class="step-dot">1</div>
+            <div class="step-text"><b>ชื่อเหมือนกันมาก</b> → similarity สูง (ใกล้ 1.0)<br/><span style="color:#94a3b8">"Login ไม่ได้" vs "Login ไม่ผ่าน" → ~0.6</span></div>
+          </div>
+          <div class="step-row">
+            <div class="step-dot">2</div>
+            <div class="step-text"><b>ชื่อต่างกันหมด</b> → similarity ต่ำ (ใกล้ 0)<br/><span style="color:#94a3b8">"Login ไม่ได้" vs "แก้ UI Dashboard" → ~0.05</span></div>
+          </div>
+          <div class="step-row">
+            <div class="step-dot">3</div>
+            <div class="step-text"><b>Filter: similarity > 0.1</b> → ถ้าชื่อคล้ายกันน้อยกว่า 10% จะไม่เอาเข้า candidates เลย</div>
+          </div>
+        </div>
+
+        <div class="example" style="margin-top:10px">
+          <b>ทำไมต้องมีทั้ง ts_rank และ trigram?</b><br/>
+          <b>ts_rank</b> ดี: ค้นหาข้อความในเนื้อหายาวๆ ได้เร็ว เช่น ค้นในคำอธิบาย ticket<br/>
+          <b>trigram</b> ดี: จับชื่อที่สะกดผิดนิดหน่อย หรือพิมพ์ต่างกันเล็กน้อยได้<br/><br/>
+          เช่น "ชำระเงิน" vs "ชำระเงิน " (มีช่องว่างท้าย) → ts_rank อาจไม่จับ แต่ trigram จับได้
+        </div>
+      </div>
+
+      <div class="callout">
+        <b>สรุปความต่าง:</b><br/>
+        ts_rank = ค้นหา <b>เนื้อหา / คำค้น</b> ในข้อความยาว (ดูทั้ง name + desc)<br/>
+        trigram = เปรียบ <b>ชื่อ ticket</b> ว่าตัวอักษรคล้ายกันแค่ไหน (ดูแค่ ticket_name)
+      </div>
+    </div>
+
+    <div class="callout green" style="margin-top: 16px">
+      <b>tag_overlap_ratio</b> คำนวณอย่างไร?<br/>
+      ticket ใหม่มี 4 tags → ticket เก่า match 2 ตัว → ratio = 2/4 = 0.5<br/>
+      จากนั้น 0.5 × 0.35 = <b>0.175</b>
+    </div>
+  </div>
+
+  <!-- ===== 4. AI RERANK ===== -->
+  <div class="section">
+    <h2><span class="icon">🤖</span> AI Rerank — Phase 2 (Claude Haiku)</h2>
+
+    <div class="two-col">
+      <div>
+        <div class="phase">
+          <div class="phase-num blue">1</div>
+          <div class="phase-content">
+            <h4>SQL ดึง top 20</h4>
+            <p>คำนวณ score จาก full-text + tag + trigram — เร็วมาก แต่ดูแค่ "คำตรงกัน"</p>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="phase-num green">2</div>
+          <div class="phase-content">
+            <h4>Claude Haiku จัดลำดับใหม่</h4>
+            <p>เข้าใจ "ความหมาย" — รู้ว่า "บัตรถูกปฏิเสธ" กับ "ชำระเงินไม่ได้" คือเรื่องเดียวกัน</p>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="phase-num blue">3</div>
+          <div class="phase-content">
+            <h4>คืน top 5</h4>
+            <p>ผลลัพธ์ที่แม่นกว่า ก่อน save ลง ticket_relation</p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>Prompt ที่ส่งให้ Claude</h3>
+        <pre style="font-size:0.75rem">
+ต้นทาง: #6500 "ปัญหาชำระเงินไม่ได้"
+
+Candidates:
+[0] #6499 "บัตรถูกปฏิเสธตอน checkout"
+[1] #6480 "Login ไม่ได้"
+[2] #6470 "ยอดเงินไม่ตัด"
+
+ตอบ JSON เท่านั้น:
+[{"index":0,"score":0.95},
+ {"index":2,"score":0.88},
+ {"index":1,"score":0.12}]</pre>
+      </div>
+    </div>
+
+    <div class="callout yellow">
+      <b>ทำไม Claude ถึง "รู้"?</b> — ไม่ใช่การรู้จริงๆ แต่เป็นการ <b>จับ pattern</b> จากข้อความมหาศาลที่เคย train มา<br/>
+      คำที่มีความหมายใกล้กัน → ถูกแปลงเป็น vector ตัวเลขที่ใกล้กัน → Claude ทำนายได้ว่าอะไรคล้ายกับอะไร
+    </div>
+  </div>
+
+  <!-- ===== 5. RECURRING BUG ===== -->
+  <div class="section">
+    <h2><span class="icon">🐛</span> Recurring Bug Detection</h2>
+    <pre>
+IF ticket.state IN [68 (Problem), 8 (Test Failed)]
+   AND ticket มี tag "แจ้งปัญหาจาก support"
+THEN relation_type = "recurring_bug"
+ELSE relation_type = "similar"</pre>
+
+    <div class="two-col" style="margin-top:16px">
+      <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:16px; text-align:center;">
+        <div style="font-size:1.5rem">🔴</div>
+        <div style="color:#b91c1c; font-weight:700; margin-top:8px">recurring_bug</div>
+        <div style="color:#dc2626; font-size:0.8rem; margin-top:4px">bug ที่เกิดซ้ำจาก production</div>
+      </div>
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:16px; text-align:center;">
+        <div style="font-size:1.5rem">🔵</div>
+        <div style="color:#1d4ed8; font-weight:700; margin-top:8px">similar</div>
+        <div style="color:#2563eb; font-size:0.8rem; margin-top:4px">tickets ที่เนื้อหาคล้ายกัน</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:16px">
+      หลังตรวจ type แล้ว → <b>UPSERT ลง ticket_relation</b><br/>
+      <code>ON CONFLICT (source, target) DO UPDATE SET similarity_score = ..., relation_type = ...</code>
+    </div>
+  </div>
+
+  <!-- ===== 6. STAR MAP ===== -->
+  <div class="section">
+    <h2><span class="icon">🌟</span> Star Map — Graph Visualization</h2>
+    <p style="color:#64748b; margin-bottom:20px">ใช้ข้อมูลจาก ticket_relation สร้างเป็น network graph แล้วคำนวณ Insights 7 ส่วน</p>
+
+    <table>
+      <thead>
+        <tr><th>#</th><th>Section</th><th>คืออะไร</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><b>top_nodes</b></td>
+          <td>ticket ที่ "สำคัญ" ที่สุดในกราฟ<br/>
+          <code style="color:#1d4ed8; background:#eff6ff; padding:2px 6px; border-radius:4px; font-size:0.8rem">score = connections×0.3 + betweenness×0.4 + pagerank×0.3</code></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><b>modules</b></td>
+          <td>สุขภาพแต่ละ module (IPD, Billing, Chat ฯลฯ) → module_score 0–100</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><b>team_modules</b></td>
+          <td>แต่ละคนทำ module ไหนบ้าง กี่ ticket</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><b>knowledge_map</b></td>
+          <td>Heatmap คน × module → จำนวน ticket</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><b>flow_metrics</b></td>
+          <td>WIP, Throughput/สัปดาห์, Aging WIP (ค้าง > 14 วัน)</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td><b>collaborations</b></td>
+          <td>คู่ที่ทำงานร่วมกัน co-own ≥ 2 tickets</td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td><b>communities</b></td>
+          <td>กลุ่ม ticket ที่เกี่ยวข้องกัน (Label Propagation)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin-top:24px">Graph Algorithms ที่ใช้</h3>
+    <div class="score-grid" style="margin-top:12px">
+      <div class="score-card">
+        <div class="label">Betweenness Centrality</div>
+        <div class="value" style="color:#1d4ed8; font-size:1rem;">Brandes</div>
+        <div class="weight">ticket ที่เป็น "จุดผ่าน" ระหว่างกลุ่ม — น้ำหนัก 40%</div>
+      </div>
+      <div class="score-card">
+        <div class="label">PageRank</div>
+        <div class="value" style="color:#15803d; font-size:1rem;">Power Method</div>
+        <div class="weight">ticket ที่คนสำคัญชี้หา — น้ำหนัก 30%</div>
+      </div>
+      <div class="score-card">
+        <div class="label">Community Detection</div>
+        <div class="value" style="color:#be185d; font-size:1rem;">Label Prop</div>
+        <div class="weight">จับกลุ่ม ticket ที่เกี่ยวข้องกัน</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 7. MODULE SCORE ===== -->
+  <div class="section">
+    <h2><span class="icon">📊</span> Module Score — สุขภาพแต่ละ Module</h2>
+
+    <pre>
+stability  = 100 - (bugCount / total) × 200    ← bug น้อย = stability สูง
+velocity   = (doneCount / total) × 100          ← งานเสร็จกี่ %
+quality    = 100 - (bugCount / total) × 300     ← หักหนักกว่า stability
+complexity = (total / 20) × 100                 ← ticket เยอะ = complex (ยิ่งสูงยิ่งไม่ดี)
+risk       = (bugCount / total) × 100
+             + (คนดูแลน้อย ? +30 : 0)
+
+module_score =
+  stability  × 0.25
+  + (100 - complexity) × 0.15
+  + velocity × 0.25
+  + quality  × 0.25
+  + (100 - risk) × 0.10</pre>
+
+    <h3 style="margin-top:20px">ตัวอย่าง — Module IPD</h3>
+    <p style="color:#64748b; font-size:0.8rem; margin-bottom:12px">20 tickets, bug 2 ใบ, done 15 ใบ, 3 คนดูแล</p>
+    <table>
+      <thead><tr><th>มิติ</th><th>คำนวณ</th><th>ได้</th><th>น้ำหนัก</th><th>คะแนน</th></tr></thead>
+      <tbody>
+        <tr><td>stability</td><td>100 - (2/20)×200</td><td>80</td><td>×0.25</td><td>20.0</td></tr>
+        <tr><td>velocity</td><td>(15/20)×100</td><td>75</td><td>×0.25</td><td>18.75</td></tr>
+        <tr><td>quality</td><td>100 - (2/20)×300</td><td>70</td><td>×0.25</td><td>17.5</td></tr>
+        <tr><td>complexity</td><td>(20/20)×100 = 100 → (100-100)</td><td>0</td><td>×0.15</td><td>0.0</td></tr>
+        <tr><td>risk</td><td>(2/20)×100 + 0 = 10 → (100-10)</td><td>90</td><td>×0.10</td><td>9.0</td></tr>
+        <tr style="background:#f8fafc"><td colspan="4"><b>รวม</b></td><td><b>65</b> → <span class="badge-health warning">🟡 Warning</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin-top:24px">เกณฑ์ Health Status</h3>
+    <div class="score-grid" style="margin-top:12px">
+      <div class="score-card" style="border-color:#22c55e">
+        <div class="value" style="color:#15803d;">≥ 70</div>
+        <div class="label" style="margin-top:8px"><span class="badge-health healthy">🟢 Healthy</span></div>
+        <div class="weight">module สุขภาพดี bug น้อย งานไหล</div>
+      </div>
+      <div class="score-card" style="border-color:#eab308">
+        <div class="value" style="color:#a16207;">≥ 40</div>
+        <div class="label" style="margin-top:8px"><span class="badge-health warning">🟡 Warning</span></div>
+        <div class="weight">มี bug บ้าง หรืองานค้างอยู่</div>
+      </div>
+      <div class="score-card" style="border-color:#ef4444">
+        <div class="value" style="color:#b91c1c;">< 40</div>
+        <div class="label" style="margin-top:8px"><span class="badge-health critical">🔴 Critical</span></div>
+        <div class="weight">bug เยอะ หรือคนดูแลน้อยเกินไป</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:16px">
+      <b>Quarter Snapshot</b> — บันทึก score ทุก quarter ลง <code>module_score_snapshot</code><br/>
+      เพื่อเปรียบเทียบ trend ว่า module ดีขึ้นหรือแย่ลงเทียบ Q ที่แล้ว
+    </div>
+  </div>
+
+  <!-- ===== 8. MODULE SCORE SNAPSHOT ===== -->
+  <div class="section">
+    <h2><span class="icon">📸</span> module_score_snapshot — ทำตอนไหน? ยังไง? ใคร?</h2>
+
+    <h3 style="margin-bottom:8px">ตารางในฐานข้อมูล</h3>
+    <pre style="margin-bottom:20px">module_score_snapshot
+┌─────────────────────┬────────────────────────────────────────────────┐
+│ column              │ ความหมาย                                        │
+├─────────────────────┼────────────────────────────────────────────────┤
+│ module_tag_id       │ ID ของ module (tag ที่ระบุ module)              │
+│ quarter             │ รูปแบบ "2026-Q1" (ปี-ไตรมาส)                   │
+│ score               │ คะแนนรวม 0-100 ตอนนั้น                          │
+│ stability           │ มิติ stability ตอนนั้น                           │
+│ complexity          │ มิติ complexity ตอนนั้น                          │
+│ velocity            │ มิติ velocity ตอนนั้น                            │
+│ quality             │ มิติ quality ตอนนั้น                             │
+│ risk                │ มิติ risk ตอนนั้น                                │
+│ snapshot_at         │ timestamp ที่บันทึก                              │
+└─────────────────────┴────────────────────────────────────────────────┘</pre>
+
+    <h3 style="margin-bottom:12px">2 วิธีที่ snapshot ถูกสร้าง</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:18px">
+        <div style="font-weight:700;color:#1d4ed8;margin-bottom:8px">🔵 วิธีที่ 1 — Manual (ใช้งานจริง)</div>
+        <div style="font-size:0.85rem;color:#1e40af;font-family:monospace;background:#dbeafe;padding:6px 10px;border-radius:6px;margin-bottom:10px">POST /v1/ticket/modules/snapshot</div>
+        <div style="font-size:0.88rem;color:#334155;line-height:1.6">
+          Admin เรียก endpoint นี้เอง<br/>
+          → เรียก <code>takeGlobalSnapshot()</code><br/>
+          → query module ทั้งหมดจาก DB<br/>
+          → คำนวณ score แต่ละมิติ<br/>
+          → UPSERT per (module_tag_id, quarter)<br/>
+          <span style="color:#6b7280;font-size:0.8rem;margin-top:6px;display:block">ถ้า snapshot ของ Q นั้นมีแล้ว → อัปเดต (ไม่สร้างซ้ำ)</span>
+        </div>
+      </div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:18px">
+        <div style="font-weight:700;color:#15803d;margin-bottom:8px">🟢 วิธีที่ 2 — อ่าน snapshot ที่มีอยู่</div>
+        <div style="font-size:0.85rem;color:#166534;font-family:monospace;background:#dcfce7;padding:6px 10px;border-radius:6px;margin-bottom:10px">buildInsights() → health_overview</div>
+        <div style="font-size:0.88rem;color:#334155;line-height:1.6">
+          เรียกผ่าน Star Map Insights<br/>
+          → <code>buildHealthOverviewFromSnapshot()</code><br/>
+          → อ่าน snapshot ล่าสุดของแต่ละ module<br/>
+          → เปรียบเทียบ Q ปัจจุบัน vs Q ที่แล้ว<br/>
+          → คืน trend (up/down/stable)<br/>
+          <span style="color:#6b7280;font-size:0.8rem;margin-top:6px;display:block">ไม่ได้สร้าง snapshot ใหม่ — แค่อ่านที่มีอยู่</span>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom:12px">flow ของ takeGlobalSnapshot()</h3>
+    <div class="flow" style="margin-bottom:20px">
+      <div class="flow-step blue">POST /modules/snapshot<div class="flow-label">Admin เรียก</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">Query modules<br/>ทั้งหมดจาก DB<div class="flow-label">tag ที่เป็น module</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step yellow">คำนวณ score<br/>5 มิติ<div class="flow-label">stability/velocity/…</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step purple">หา quarter<br/>"2026-Q1"<div class="flow-label">จาก timestamp ปัจจุบัน</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step green">UPSERT<br/>module_score_snapshot<div class="flow-label">per (module, quarter)</div></div>
+    </div>
+
+    <h3 style="margin-bottom:12px">takeQuarterSnapshot() — ยังไม่มีใครเรียก</h3>
+    <div class="callout" style="background:#fefce8;border-color:#eab308;margin-bottom:16px">
+      <b>สถานะ: Future Use</b><br/>
+      <code>takeQuarterSnapshot()</code> ถูกเขียนไว้ใน StarMapInsights.service.js แต่ยังไม่มี<br/>
+      route หรือ cron job ที่เรียกมัน — ออกแบบไว้รองรับการเรียกแบบ programmatic ในอนาคต<br/>
+      ต่างจาก <code>takeGlobalSnapshot()</code> ที่ใช้งานจริงผ่าน POST endpoint
+    </div>
+
+    <h3 style="margin-bottom:12px">ไม่มี Cron Job</h3>
+    <div class="callout" style="background:#fef2f2;border-color:#ef4444">
+      <b>สำคัญ</b> — snapshot ไม่ได้ทำอัตโนมัติ<br/>
+      ไม่มี cron job, scheduler หรือ trigger อัตโนมัติ<br/>
+      Admin ต้องเรียก <code>POST /v1/ticket/modules/snapshot</code> เองเมื่อต้องการบันทึก Q snapshot<br/>
+      <span style="color:#6b7280;font-size:0.85rem">เช่น ปลาย Q หรือหลัง sprint review</span>
+    </div>
+  </div>
+
+  <!-- ===== 9. FULL FLOW ===== -->
+  <div class="section">
+    <h2><span class="icon">🗺️</span> Full Flow สรุป (ทั้งระบบ)</h2>
+    <pre>
+สร้าง/แก้ ticket
+      │
+      ▼
+SQL หา ticket ทั้งหมดใน DB ที่ผ่าน filter
+(search_vector match OR trigram > 0.1)
+      │
+      ▼
+คำนวณ combined score ให้แต่ละ ticket
+(Full-text 40% + Tag 35% + Trigram 25% + bonuses)
+      │
+      ▼
+เรียง top 20 ตาม score
+      │
+      ▼
+Claude Haiku rerank → เข้าใจ "ความหมาย" → top 5
+      │
+      ▼
+ตรวจ recurring_bug?
+(state Problem/Test Failed + tag "แจ้งปัญหาจาก support")
+      │
+      ├── ✅ ใช่ → relation_type = "recurring_bug"
+      └── ❌ ไม่ → relation_type = "similar"
+      │
+      ▼
+UPSERT → ticket_relation
+(ON CONFLICT → UPDATE score + type)
+      │
+      ▼
+Star Map ใช้ข้อมูลนี้สร้าง graph
+      │
+      ▼
+buildInsights() → 7 sections
+(top_nodes, modules, team_modules, knowledge_map,
+ flow_metrics, collaborations, communities)
+      │
+      ▼
+module_score บอกสุขภาพแต่ละ module
+🟢 Healthy / 🟡 Warning / 🔴 Critical</pre>
+  </div>
+
+</div>
+
+<footer>MCS Cloud · nodesupport · สรุปโดย Miracle Oracle · 10 มีนาคม 2569</footer>
+</body>
+</html>
